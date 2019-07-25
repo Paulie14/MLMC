@@ -166,8 +166,9 @@ class Level:
                 if fine_sample.sample_id not in collected_samples:
                     self.scheduled_samples[fine_sample.sample_id] = (fine_sample, coarse_sample)
             # Not collected and not failed sample to scheduled
-            elif fine_sample.sample_id not in collected_samples and fine_sample.sample_id not in self._failed_sample_ids:
-                    self.scheduled_samples[fine_sample.sample_id] = (fine_sample, coarse_sample)
+            #elif fine_sample.sample_id not in collected_samples and fine_sample.sample_id not in self._failed_sample_ids:
+            else:
+                 self.scheduled_samples[fine_sample.sample_id] = (fine_sample, coarse_sample)
 
         self.collected_samples = list(collected_samples.values())
         self.n_ops_estimate = self._hdf_level_group.n_ops_estimate
@@ -373,7 +374,12 @@ class Level:
         orig_n_finished = len(self.collected_samples)
 
         for sample_id in not_queued_sample_ids:
+            if len(self.scheduled_samples) == 0:
+                break
             fine_sample, coarse_sample = self.scheduled_samples[sample_id]
+
+            print("fine sample ", fine_sample)
+            print("coarse sample ", coarse_sample)
 
             # Sample() instance
             fine_sample = self.fine_simulation.extract_result(fine_sample)
@@ -483,13 +489,15 @@ class Level:
         """
         # Level jobs ids (=names)
         job_ids = self._hdf_level_group.level_jobs()
+
         # Ids from jobs that are not queued
         not_queued_jobs = [job_id for job_id in job_ids
                            if not os.path.exists(os.path.join(self._jobs_dir, *[job_id, 'QUEUED']))]
-
         # Set of sample ids that are not in queued
         not_queued_sample_ids = self._hdf_level_group.job_samples(not_queued_jobs)
         finished_sample_ids = self._hdf_level_group.get_finished_ids()
+
+        finished_sample_ids = []
 
         # Return sample ids of not queued and not finished samples
         if len(not_queued_sample_ids) > 0 and len(finished_sample_ids) > 0:
